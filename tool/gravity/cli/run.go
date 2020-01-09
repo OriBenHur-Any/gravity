@@ -359,6 +359,8 @@ func Execute(g *Application, cmd string, extraArgs []string) (err error) {
 			return trace.Wrap(err)
 		}
 		return updateTrigger(localEnv, updateEnv, *config)
+	case g.ReconfigureCmd.FullCommand():
+		return reconfigureCluster(localEnv, *g.ReconfigureCmd.AdvertiseAddr)
 	case g.ResumeCmd.FullCommand():
 		return resumeOperation(localEnv, g,
 			PhaseParams{

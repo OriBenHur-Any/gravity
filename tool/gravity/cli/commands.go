@@ -66,6 +66,8 @@ type Application struct {
 	LeaveCmd LeaveCmd
 	// RemoveCmd removes the specified node from the cluster
 	RemoveCmd RemoveCmd
+	//
+	ReconfigureCmd ReconfigureCmd
 	// PlanCmd manages an operation plan
 	PlanCmd PlanCmd
 	// UpdatePlanInitCmd creates a new update operation plan
@@ -402,6 +404,8 @@ type InstallCmd struct {
 	Set *[]string
 	// Values is a list of YAML files with Helm chart values.
 	Values *[]string
+	//
+	Reconfigure *bool
 }
 
 // JoinCmd joins to the installer or existing cluster
@@ -480,6 +484,13 @@ type RemoveCmd struct {
 	Force *bool
 	// Confirm suppresses confirmation prompt
 	Confirm *bool
+}
+
+//
+type ReconfigureCmd struct {
+	*kingpin.CmdClause
+	//
+	AdvertiseAddr *string
 }
 
 // ResumeCmd resumes active operation

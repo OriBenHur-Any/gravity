@@ -121,7 +121,8 @@ func (r *Engine) execute(ctx context.Context, installer install.Interface, confi
 }
 
 func (r *Engine) validate(ctx context.Context, config install.Config) (err error) {
-	return trace.Wrap(config.RunLocalChecks(ctx))
+	return nil
+	//	return trace.Wrap(config.RunLocalChecks(ctx))
 }
 
 // bootstrap prepares for the installation

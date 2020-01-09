@@ -757,6 +757,9 @@ type Operations interface {
 	// in the cluster
 	CreateClusterGarbageCollectOperation(context.Context, CreateClusterGarbageCollectOperationRequest) (*SiteOperationKey, error)
 
+	//
+	CreateClusterReconfigureOperation(context.Context, CreateClusterReconfigureOperationRequest) (*SiteOperationKey, error)
+
 	// GetsiteOperation returns the operation information based on it's key
 	GetSiteOperation(SiteOperationKey) (*SiteOperation, error)
 
@@ -1164,6 +1167,8 @@ func (s *SiteOperation) TypeString() string {
 	switch s.Type {
 	case OperationInstall:
 		return "install"
+	case OperationReconfigure:
+		return "reconfigure"
 	case OperationExpand:
 		return "expand"
 	case OperationUpdate:
@@ -1374,6 +1379,12 @@ type CreateClusterGarbageCollectOperationRequest struct {
 	AccountID string `json:"account_id"`
 	// ClusterName is the name of the cluster
 	ClusterName string `json:"cluster_name"`
+}
+
+//
+type CreateClusterReconfigureOperationRequest struct {
+	SiteKey
+	AdvertiseAddr string `json:"advertise_addr"`
 }
 
 // CreateUpdateEnvarsOperationRequest is a request

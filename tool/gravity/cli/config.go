@@ -164,6 +164,8 @@ type InstallConfig struct {
 	writeStateDir string
 	// Values are helm values in marshaled yaml format
 	Values []byte
+	//
+	Reconfigure bool
 }
 
 // NewInstallConfig creates install config from the passed CLI args and flags
@@ -215,6 +217,7 @@ func NewInstallConfig(env *localenv.LocalEnvironment, g *Application) (*InstallC
 		Remote:             *g.InstallCmd.Remote,
 		FromService:        *g.InstallCmd.FromService,
 		Values:             values,
+		Reconfigure:        *g.InstallCmd.Reconfigure,
 		Printer:            env,
 	}, nil
 }
@@ -413,6 +416,7 @@ func (i *InstallConfig) NewInstallerConfig(
 		Operator:           wizard.Operator,
 		LocalAgent:         !i.Remote,
 		Values:             i.Values,
+		Reconfigure:        i.Reconfigure,
 	}, nil
 
 }

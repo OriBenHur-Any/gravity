@@ -97,6 +97,10 @@ const (
 	OperationStateInstallProvisioning = "install_provisioning"
 	OperationStateInstallDeploying    = "install_deploying"
 
+	//
+	OperationReconfigure           = "operation_reconfigure"
+	OperationReconfigureInProgress = "reconfigure_in_progress"
+
 	// OperationStateReady indicates that the operation is ready to
 	// be executed by the installer process
 	OperationStateReady = "ready"

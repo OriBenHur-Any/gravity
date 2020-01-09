@@ -743,9 +743,15 @@ func NewInstallerConnectStrategy(env *localenv.LocalEnvironment, config InstallC
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
+	validate := environ.ValidateInstall(env)
+	if config.Reconfigure {
+		validate = func() error {
+			return nil
+		}
+	}
 	return &installerclient.InstallerStrategy{
 		Args:           args,
-		Validate:       environ.ValidateInstall(env),
+		Validate:       validate,
 		ApplicationDir: utils.Exe.WorkingDir,
 		ServicePath:    servicePath,
 	}, nil

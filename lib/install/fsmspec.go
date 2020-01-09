@@ -80,6 +80,16 @@ func FSMSpec(config FSMConfig) fsm.FSMSpecFunc {
 			return phases.NewHealth(p,
 				config.Operator)
 
+		case p.Phase.ID == "/fix":
+			client, err := getKubeClient(p)
+			if err != nil {
+				return nil, trace.Wrap(err)
+			}
+			return phases.NewFix(p,
+				config.Operator,
+				config.LocalPackages,
+				client)
+
 		case p.Phase.ID == phases.RBACPhase:
 			client, err := getKubeClient(p)
 			if err != nil {
