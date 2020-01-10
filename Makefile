@@ -42,13 +42,13 @@ RELEASE_OUT ?=
 TELEPORT_TAG = 3.2.13
 # TELEPORT_REPOTAG adapts TELEPORT_TAG to the teleport tagging scheme
 TELEPORT_REPOTAG := v$(TELEPORT_TAG)
-PLANET_TAG := 6.1.11-$(K8S_VER_SUFFIX)-17-gbf782cf
+PLANET_TAG := 6.1.11-$(K8S_VER_SUFFIX)-18-g299fa77
 PLANET_BRANCH := $(PLANET_TAG)
 K8S_APP_TAG := $(GRAVITY_TAG)
 TELEKUBE_APP_TAG := $(GRAVITY_TAG)
 WORMHOLE_APP_TAG := $(GRAVITY_TAG)
-LOGGING_APP_TAG ?= 6.0.2
-MONITORING_APP_TAG ?= 6.0.4
+LOGGING_APP_TAG ?= 6.0.3
+MONITORING_APP_TAG ?= 6.0.5
 DNS_APP_TAG = 0.4.0
 BANDWAGON_TAG ?= 6.0.1
 RBAC_APP_TAG := $(GRAVITY_TAG)
@@ -200,12 +200,12 @@ TF_PROVIDERS ?= terraform-provider-gravity
 export
 
 # the default target is a containerized CI/CD build
-.PHONY:build
+.PHONY: build
 build:
 	$(MAKE) -C build.assets build
 
 # 'install' uses the host's Golang to place output into $GOPATH/bin
-.PHONY:install
+.PHONY: install
 install:
 	go install -ldflags $(GRAVITY_LINKFLAGS) -tags "$(GRAVITY_BUILDTAGS)" ./tool/tele ./tool/gravity
 
@@ -217,12 +217,11 @@ clean:
 	@rm -f $(GOPATH)/bin/tele $(GOPATH)/bin/gravity
 
 
-.PHONY:
+.PHONY: production
 production: TMP := $(shell mktemp -d)
 production:
 	GRAVITY="$(GRAVITY_OUT) --state-dir=$(TMP)" $(MAKE) -C build.assets production
 	rm -rf $(TMP)
-
 
 #
 # generate GRPC files
