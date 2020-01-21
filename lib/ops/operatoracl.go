@@ -506,7 +506,7 @@ func (o *OperatorACL) CreateClusterGarbageCollectOperation(ctx context.Context, 
 
 // CreateClusterReconfigureOperation creates a new cluster reconfiguration operation.
 func (o *OperatorACL) CreateClusterReconfigureOperation(ctx context.Context, req CreateClusterReconfigureOperationRequest) (*SiteOperationKey, error) {
-	if err := o.ClusterAction(req.ClusterName, storage.KindCluster, teleservices.VerbUpdate); err != nil {
+	if err := o.ClusterAction(req.SiteDomain, storage.KindCluster, teleservices.VerbUpdate); err != nil {
 		return nil, trace.Wrap(err)
 	}
 	return o.operator.CreateClusterReconfigureOperation(ctx, req)

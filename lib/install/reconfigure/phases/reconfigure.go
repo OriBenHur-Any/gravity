@@ -161,3 +161,11 @@ func (*fixExecutor) PreCheck(ctx context.Context) error {
 func (*fixExecutor) PostCheck(ctx context.Context) error {
 	return nil
 }
+
+func opKey(plan storage.OperationPlan) ops.SiteOperationKey {
+	return ops.SiteOperationKey{
+		AccountID:   plan.AccountID,
+		SiteDomain:  plan.ClusterName,
+		OperationID: plan.OperationID,
+	}
+}

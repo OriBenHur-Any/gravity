@@ -300,6 +300,12 @@ func Execute(g *Application, cmd string, extraArgs []string) (err error) {
 			return trace.Wrap(err)
 		}
 		return startInstall(localEnv, *config)
+	case g.ReconfigureCmd.FullCommand():
+		config, err := NewReconfigureConfig(localEnv, g)
+		if err != nil {
+			return trace.Wrap(err)
+		}
+		return reconfigureCluster(localEnv, *config)
 	case g.JoinCmd.FullCommand():
 		return join(localEnv, g, NewJoinConfig(g))
 	case g.AutoJoinCmd.FullCommand():
@@ -359,8 +365,6 @@ func Execute(g *Application, cmd string, extraArgs []string) (err error) {
 			return trace.Wrap(err)
 		}
 		return updateTrigger(localEnv, updateEnv, *config)
-	case g.ReconfigureCmd.FullCommand():
-		return reconfigureCluster(localEnv, *g.ReconfigureCmd.AdvertiseAddr)
 	case g.ResumeCmd.FullCommand():
 		return resumeOperation(localEnv, g,
 			PhaseParams{

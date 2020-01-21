@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Gravitational, Inc.
+Copyright 2020 Gravitational, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// package cli implements command line installer workflow
-package cli
+package reconfigure
 
 import (
 	"bytes"
@@ -31,23 +30,17 @@ import (
 	libinstall "github.com/gravitational/gravity/lib/install"
 	"github.com/gravitational/gravity/lib/install/dispatcher"
 	"github.com/gravitational/gravity/lib/ops"
-	"github.com/gravitational/gravity/lib/schema"
 	"github.com/gravitational/gravity/lib/state"
-	"github.com/gravitational/gravity/lib/storage"
 	"github.com/gravitational/gravity/lib/system/environ"
 	"github.com/gravitational/gravity/lib/utils"
 
 	"github.com/fatih/color"
 	"github.com/gravitational/trace"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
-// New returns a new installer that implements non-interactive installation
-// workflow.
 //
-// The installer can optionally run an agent to include the host node
-// in the resulting cluster
-func New(config Config) (*Engine, error) {
+func NewEngine(config Config) (*Engine, error) {
 	if err := config.checkAndSetDefaults(); err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -58,18 +51,18 @@ func New(config Config) (*Engine, error) {
 
 func (r *Config) checkAndSetDefaults() error {
 	if r.FieldLogger == nil {
-		return trace.BadParameter("FieldLogger is required")
+		r.FieldLogger = logrus.WithField(trace.Component, "engine:reconfigurator")
 	}
 	if r.Operator == nil {
-		return trace.BadParameter("Operator is required")
+		return trace.BadParameter("missing Operator")
 	}
 	return nil
 }
 
-// Config defines the installer configuration
+//
 type Config struct {
 	// FieldLogger is the logger for the installer
-	log.FieldLogger
+	logrus.FieldLogger
 	// Operator specifies the service operator
 	ops.Operator
 }
@@ -94,9 +87,9 @@ func (r *Engine) execute(ctx context.Context, installer install.Interface, confi
 		ctx:       ctx,
 		config:    config,
 	}
-	if err := e.bootstrap(); err != nil {
-		return trace.Wrap(err)
-	}
+	// if err := e.bootstrap(); err != nil {
+	// 	return trace.Wrap(err)
+	// }
 	operation, err := e.upsertClusterAndOperation()
 	if err != nil {
 		return trace.Wrap(err, "failed to create cluster/operation")
@@ -111,9 +104,6 @@ func (r *Engine) execute(ctx context.Context, installer install.Interface, confi
 	if err := installer.ExecuteOperation(operation.Key()); err != nil {
 		return trace.Wrap(err)
 	}
-	if err := installer.CompleteFinalInstallStep(operation.Key(), 0); err != nil {
-		r.WithError(err).Warn("Failed to complete final install step.")
-	}
 	if err := installer.CompleteOperation(*operation); err != nil {
 		r.WithError(err).Warn("Failed to finalize install.")
 	}
@@ -121,21 +111,22 @@ func (r *Engine) execute(ctx context.Context, installer install.Interface, confi
 }
 
 func (r *Engine) validate(ctx context.Context, config install.Config) (err error) {
-	return trace.Wrap(config.RunLocalChecks(ctx))
+	return nil
+	//	return trace.Wrap(config.RunLocalChecks(ctx))
 }
 
-// bootstrap prepares for the installation
-func (r *executor) bootstrap() error {
-	err := install.InstallBinary(r.config.ServiceUser.UID, r.config.ServiceUser.GID, r.FieldLogger)
-	if err != nil {
-		return trace.Wrap(err, "failed to install binary")
-	}
-	err = configureStateDirectory(r.config.SystemDevice)
-	if err != nil {
-		return trace.Wrap(err, "failed to configure state directory")
-	}
-	return nil
-}
+// // bootstrap prepares for the installation
+// func (r *executor) bootstrap() error {
+// 	err := install.InstallBinary(r.config.ServiceUser.UID, r.config.ServiceUser.GID, r.FieldLogger)
+// 	if err != nil {
+// 		return trace.Wrap(err, "failed to install binary")
+// 	}
+// 	err = configureStateDirectory(r.config.SystemDevice)
+// 	if err != nil {
+// 		return trace.Wrap(err, "failed to configure state directory")
+// 	}
+// 	return nil
+// }
 
 func (r *executor) upsertClusterAndOperation() (*ops.SiteOperation, error) {
 	clusters, err := r.Operator.GetSites(defaults.SystemAccountID)
@@ -168,24 +159,13 @@ func (r *executor) upsertClusterAndOperation() (*ops.SiteOperation, error) {
 }
 
 func (r *executor) createOperation() (*ops.SiteOperation, error) {
-	key, err := r.Operator.CreateSiteInstallOperation(r.ctx, ops.CreateSiteInstallOperationRequest{
-		SiteDomain: r.config.SiteDomain,
-		AccountID:  defaults.SystemAccountID,
-		// With CLI install flow we always rely on external provisioner
-		Provisioner: schema.ProvisionerOnPrem,
-		Variables: storage.OperationVariables{
-			System: storage.SystemVariables{
-				Docker: r.config.Docker,
+	key, err := r.Operator.CreateClusterReconfigureOperation(r.ctx,
+		ops.CreateClusterReconfigureOperationRequest{
+			SiteKey: ops.SiteKey{
+				AccountID:  defaults.SystemAccountID,
+				SiteDomain: r.config.SiteDomain,
 			},
-			OnPrem: storage.OnPremVariables{
-				PodCIDR:     r.config.PodCIDR,
-				ServiceCIDR: r.config.ServiceCIDR,
-				VxlanPort:   r.config.VxlanPort,
-			},
-			Values: r.config.Values,
-		},
-		Profiles: install.ServerRequirements(*r.config.Flavor),
-	})
+		})
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}

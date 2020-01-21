@@ -2037,7 +2037,7 @@ func (h *WebHandler) createClusterGarbageCollectOperation(w http.ResponseWriter,
 
    POST /portal/v1/accounts/:account_id/sites/:site_domain/operations/reconfigure
 */
-func (h *WebHandler) createClusterGarbageCollectOperation(w http.ResponseWriter, r *http.Request, p httprouter.Params, context *HandlerContext) error {
+func (h *WebHandler) createClusterReconfigureOperation(w http.ResponseWriter, r *http.Request, p httprouter.Params, context *HandlerContext) error {
 	var req ops.CreateClusterReconfigureOperationRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return trace.BadParameter(err.Error())

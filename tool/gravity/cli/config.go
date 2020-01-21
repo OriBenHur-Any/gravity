@@ -168,6 +168,22 @@ type InstallConfig struct {
 	Reconfigure bool
 }
 
+func NewReconfigureConfig(env *localenv.LocalEnvironment, g *Application) (*InstallConfig, error) {
+	return &InstallConfig{
+		Insecure:           *g.Insecure,
+		StateDir:           *g.ReconfigureCmd.Path,
+		UserLogFile:        *g.UserLogFile,
+		SystemLogFile:      *g.SystemLogFile,
+		AdvertiseAddr:      *g.ReconfigureCmd.AdvertiseAddr,
+		LocalPackages:      env.Packages,
+		LocalApps:          env.Apps,
+		LocalBackend:       env.Backend,
+		LocalClusterClient: env.SiteOperator,
+		Mode:               constants.InstallModeCLI,
+		Printer:            env,
+	}, nil
+}
+
 // NewInstallConfig creates install config from the passed CLI args and flags
 func NewInstallConfig(env *localenv.LocalEnvironment, g *Application) (*InstallConfig, error) {
 	mode := *g.InstallCmd.Mode

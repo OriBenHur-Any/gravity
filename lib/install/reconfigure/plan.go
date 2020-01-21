@@ -8,11 +8,21 @@ import (
 	"github.com/gravitational/trace"
 )
 
+func NewPlanner(getter install.PlanBuilderGetter) *Planner {
+	return &Planner{
+		PlanBuilderGetter: getter,
+	}
+}
+
 func (p *Planner) GetOperationPlan(operator ops.Operator, cluster ops.Site, operation ops.SiteOperation) (*storage.OperationPlan, error) {
 	// The "reconfigure" operation reuses a lot of the install fsm phases.
 	installBuilder, err := p.GetPlanBuilder(operator, cluster, operation)
 	if err != nil {
 		return nil, trace.Wrap(err)
+	}
+
+	builder := &PlanBuilder{
+		PlanBuilder: installBuilder,
 	}
 
 	plan := &storage.OperationPlan{
@@ -22,10 +32,6 @@ func (p *Planner) GetOperationPlan(operator ops.Operator, cluster ops.Site, oper
 		ClusterName:   operation.SiteDomain,
 		Servers:       append(builder.Masters, builder.Nodes...),
 		DNSConfig:     cluster.DNSConfig,
-	}
-
-	builder := &PlanBuilder{
-		PlanBuilder: installBuilder,
 	}
 
 	// TODO(r0mant): Add checks phase?

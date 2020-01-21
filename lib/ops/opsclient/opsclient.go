@@ -561,8 +561,8 @@ func (c *Client) CreateClusterGarbageCollectOperation(ctx context.Context, req o
 }
 
 // CreateClusterReconfigureOperation creates a new cluster reconfiguration operation.
-func (c *Client) CreateClusterGarbageCollectOperation(ctx context.Context, req ops.CreateClusterReconfigureOperationRequest) (*ops.SiteOperationKey, error) {
-	out, err := c.PostJSON(c.Endpoint("accounts", req.AccountID, "sites", req.ClusterName, "operations", "reconfigure"), req)
+func (c *Client) CreateClusterReconfigureOperation(ctx context.Context, req ops.CreateClusterReconfigureOperationRequest) (*ops.SiteOperationKey, error) {
+	out, err := c.PostJSON(c.Endpoint("accounts", req.AccountID, "sites", req.SiteDomain, "operations", "reconfigure"), req)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}

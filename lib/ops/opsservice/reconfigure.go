@@ -17,20 +17,20 @@ func (o *Operator) CreateClusterReconfigureOperation(ctx context.Context, req op
 	// 	return nil, trace.Wrap(err)
 	// }
 
+	cluster, err := o.openSite(req.SiteKey)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
 	op := ops.SiteOperation{
 		ID:         uuid.New(),
 		AccountID:  req.AccountID,
 		SiteDomain: req.SiteDomain,
 		Type:       ops.OperationReconfigure,
-		Created:    s.clock().UtcNow(),
+		Created:    cluster.clock().UtcNow(),
 		CreatedBy:  storage.UserFromContext(ctx),
-		Updated:    s.clock().UtcNow(),
+		Updated:    cluster.clock().UtcNow(),
 		State:      ops.OperationReconfigureInProgress,
-	}
-
-	cluster, err := o.openSite(req.SiteKey)
-	if err != nil {
-		return nil, trace.Wrap(err)
 	}
 
 	key, err := cluster.getOperationGroup().createSiteOperation(op)

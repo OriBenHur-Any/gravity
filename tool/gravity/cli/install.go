@@ -743,15 +743,29 @@ func NewInstallerConnectStrategy(env *localenv.LocalEnvironment, config InstallC
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	validate := environ.ValidateInstall(env)
-	if config.Reconfigure {
-		validate = func() error {
-			return nil
-		}
+	return &installerclient.InstallerStrategy{
+		Args:           args,
+		Validate:       environ.ValidateInstall(env),
+		ApplicationDir: utils.Exe.WorkingDir,
+		ServicePath:    servicePath,
+	}, nil
+}
+
+//
+func newReconfiguratorConnectStrategy(env *localenv.LocalEnvironment, config InstallConfig, commandArgs cli.CommandArgs) (strategy installerclient.ConnectStrategy, err error) {
+	args, err := commandArgs.Update(os.Args[1:], cli.NewFlag("token", config.Token))
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	args = append([]string{utils.Exe.Path}, args...)
+	args = append(args, "--from-service", utils.Exe.WorkingDir)
+	servicePath, err := state.GravityInstallDir(defaults.GravityRPCInstallerServiceName)
+	if err != nil {
+		return nil, trace.Wrap(err)
 	}
 	return &installerclient.InstallerStrategy{
 		Args:           args,
-		Validate:       validate,
+		Validate:       func() error { return nil },
 		ApplicationDir: utils.Exe.WorkingDir,
 		ServicePath:    servicePath,
 	}, nil

@@ -490,7 +490,11 @@ type RemoveCmd struct {
 type ReconfigureCmd struct {
 	*kingpin.CmdClause
 	//
+	Path *string
+	//
 	AdvertiseAddr *string
+	//
+	FromService *bool
 }
 
 // ResumeCmd resumes active operation
