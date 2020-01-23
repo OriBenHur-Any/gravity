@@ -27,11 +27,13 @@ import (
 	"github.com/gravitational/gravity/lib/checks"
 	"github.com/gravitational/gravity/lib/defaults"
 	"github.com/gravitational/gravity/lib/install"
-	libinstall "github.com/gravitational/gravity/lib/install"
 	"github.com/gravitational/gravity/lib/install/dispatcher"
 	"github.com/gravitational/gravity/lib/ops"
+	"github.com/gravitational/gravity/lib/schema"
 	"github.com/gravitational/gravity/lib/state"
+	"github.com/gravitational/gravity/lib/storage"
 	"github.com/gravitational/gravity/lib/system/environ"
+	"github.com/gravitational/gravity/lib/systeminfo"
 	"github.com/gravitational/gravity/lib/utils"
 
 	"github.com/fatih/color"
@@ -51,7 +53,7 @@ func NewEngine(config Config) (*Engine, error) {
 
 func (r *Config) checkAndSetDefaults() error {
 	if r.FieldLogger == nil {
-		r.FieldLogger = logrus.WithField(trace.Component, "engine:reconfigurator")
+		r.FieldLogger = logrus.WithField(trace.Component, "engine:reconfigure")
 	}
 	if r.Operator == nil {
 		return trace.BadParameter("missing Operator")
@@ -65,6 +67,10 @@ type Config struct {
 	logrus.FieldLogger
 	// Operator specifies the service operator
 	ops.Operator
+	// //
+	// AdvertiseAddr string
+	// //
+	// Token string
 }
 
 // Execute executes the installer steps.
@@ -94,13 +100,13 @@ func (r *Engine) execute(ctx context.Context, installer install.Interface, confi
 	if err != nil {
 		return trace.Wrap(err, "failed to create cluster/operation")
 	}
-	if err := installer.NotifyOperationAvailable(*operation); err != nil {
-		return trace.Wrap(err)
-	}
-	err = e.waitForAgents(*operation)
-	if err != nil {
-		return trace.Wrap(err)
-	}
+	// if err := installer.NotifyOperationAvailable(*operation); err != nil {
+	// 	return trace.Wrap(err)
+	// }
+	// err = e.waitForAgents(*operation)
+	// if err != nil {
+	// 	return trace.Wrap(err)
+	// }
 	if err := installer.ExecuteOperation(operation.Key()); err != nil {
 		return trace.Wrap(err)
 	}
@@ -159,13 +165,37 @@ func (r *executor) upsertClusterAndOperation() (*ops.SiteOperation, error) {
 }
 
 func (r *executor) createOperation() (*ops.SiteOperation, error) {
-	key, err := r.Operator.CreateClusterReconfigureOperation(r.ctx,
-		ops.CreateClusterReconfigureOperationRequest{
-			SiteKey: ops.SiteKey{
-				AccountID:  defaults.SystemAccountID,
-				SiteDomain: r.config.SiteDomain,
-			},
-		})
+	systemInfo, err := systeminfo.New()
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	server := storage.Server{
+		AdvertiseIP: r.config.AdvertiseAddr,
+		Hostname:    systemInfo.GetHostname(),
+		// Nodename: ,
+		// Role: ,
+		// InstanceType: ,
+		// InstanceID: ,
+		ClusterRole: string(schema.ServiceRoleMaster),
+		Provisioner: schema.ProvisionerOnPrem,
+		OSInfo:      systemInfo.GetOS(),
+		// Mounts: ,
+		// SystemState: ,
+		// Docker: ,
+		User:    systemInfo.GetUser(),
+		Created: time.Now().UTC(),
+	}
+	req := ops.CreateClusterReconfigureOperationRequest{
+		SiteKey: ops.SiteKey{
+			AccountID:  defaults.SystemAccountID,
+			SiteDomain: r.config.SiteDomain,
+		},
+		AdvertiseAddr: r.config.AdvertiseAddr,
+		Token:         r.config.Token.Token,
+		Servers:       []storage.Server{server},
+	}
+	r.Infof("DEBUG %#v", req)
+	key, err := r.Operator.CreateClusterReconfigureOperation(r.ctx, req)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -193,8 +223,9 @@ func (r *executor) waitForAgents(operation ops.SiteOperation) error {
 			return trace.Wrap(err)
 		}
 		r.WithField("report", report).Info("Installation can proceed.")
-		err = libinstall.UpdateOperationState(r.Operator, operation, *report)
-		return trace.Wrap(err)
+		return nil
+		// err = libinstall.UpdateOperationState(r.Operator, operation, *report)
+		// return trace.Wrap(err)
 	})
 	return trace.Wrap(err)
 }

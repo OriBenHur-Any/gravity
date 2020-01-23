@@ -16,13 +16,14 @@ func (o *Operator) CreateClusterReconfigureOperation(ctx context.Context, req op
 	// if err != nil {
 	// 	return nil, trace.Wrap(err)
 	// }
+	o.Infof("%#v", req)
 
 	cluster, err := o.openSite(req.SiteKey)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
 
-	op := ops.SiteOperation{
+	operation := ops.SiteOperation{
 		ID:         uuid.New(),
 		AccountID:  req.AccountID,
 		SiteDomain: req.SiteDomain,
@@ -31,9 +32,30 @@ func (o *Operator) CreateClusterReconfigureOperation(ctx context.Context, req op
 		CreatedBy:  storage.UserFromContext(ctx),
 		Updated:    cluster.clock().UtcNow(),
 		State:      ops.OperationReconfigureInProgress,
+		Servers:    req.Servers,
+		// // Reuse the same operation state install/expand use b/c that's where
+		// // the installer will be looking for the agent connection information.
+		// InstallExpand: &storage.InstallExpandOperationState{
+		// 	Agents: make(map[string]storage.AgentProfile),
+		// },
 	}
 
-	key, err := cluster.getOperationGroup().createSiteOperation(op)
+	// token, err := cluster.newProvisioningToken(operation)
+	// if err != nil {
+	// 	return nil, trace.Wrap(err)
+	// }
+
+	// for _, profile := range cluster.app.Manifest.NodeProfiles {
+	// 	agentURL, err := cluster.makeAgentURL(token, profile.Name)
+	// 	if err != nil {
+	// 		return nil, trace.Wrap(err)
+	// 	}
+	// 	operation.InstallExpand.Agents[profile.Name] = storage.AgentProfile{
+	// 		AgentURL: agentURL,
+	// 	}
+	// }
+
+	key, err := cluster.getOperationGroup().createSiteOperation(operation)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}

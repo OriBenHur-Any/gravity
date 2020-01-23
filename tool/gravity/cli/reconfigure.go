@@ -1,8 +1,10 @@
+// TODO: License
 package cli
 
 import (
 	"context"
 
+	"github.com/gravitational/gravity/lib/defaults"
 	"github.com/gravitational/gravity/lib/install"
 	installerclient "github.com/gravitational/gravity/lib/install/client"
 	"github.com/gravitational/gravity/lib/install/reconfigure"
@@ -16,6 +18,23 @@ import (
 
 func reconfigureCluster(env *localenv.LocalEnvironment, config InstallConfig) error {
 	env.PrintStep("Starting reconfigurator")
+	// Determine existing cluster name.
+	// TODO(r0mant): Do something smarter.
+	repos, err := env.Packages.GetRepositories()
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	if len(repos) != 2 {
+		return trace.BadParameter("expected 2 repositories: %v", repos)
+	}
+	var clusterName string
+	for _, repo := range repos {
+		if repo != defaults.SystemAccountOrg {
+			clusterName = repo
+		}
+	}
+	env.PrintStep("Cluster name: %v", clusterName)
+	config.SiteDomain = clusterName
 	if err := config.CheckAndSetDefaults(); err != nil {
 		return trace.Wrap(err)
 	}
@@ -67,7 +86,7 @@ func startReconfiguratorFromService(env *localenv.LocalEnvironment, config Insta
 	if err != nil {
 		return trace.Wrap(utils.NewPreconditionFailedError(err))
 	}
-	installer, err := newCLInstaller(ctx, installerConfig)
+	installer, err := newReconfigurator(ctx, installerConfig)
 	if err != nil {
 		return trace.Wrap(utils.NewPreconditionFailedError(err))
 	}
@@ -78,10 +97,13 @@ func startReconfiguratorFromService(env *localenv.LocalEnvironment, config Insta
 func newReconfigurator(ctx context.Context, config *install.Config) (*install.Installer, error) {
 	engine, err := reconfigure.NewEngine(reconfigure.Config{
 		Operator: config.Operator,
+		// AdvertiseAddr: config.AdvertiseAddr,
+		// Token:         config.Token.Token,
 	})
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
+	config.LocalAgent = false
 	installer, err := install.New(ctx, install.RuntimeConfig{
 		Config:         *config,
 		Planner:        reconfigure.NewPlanner(config),

@@ -753,7 +753,7 @@ func NewInstallerConnectStrategy(env *localenv.LocalEnvironment, config InstallC
 
 //
 func newReconfiguratorConnectStrategy(env *localenv.LocalEnvironment, config InstallConfig, commandArgs cli.CommandArgs) (strategy installerclient.ConnectStrategy, err error) {
-	args, err := commandArgs.Update(os.Args[1:], cli.NewFlag("token", config.Token))
+	args, err := commandArgs.Update(os.Args[1:])
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}

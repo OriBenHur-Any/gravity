@@ -85,6 +85,8 @@ const (
 	SiteStateUpdatingEnviron = "updating_cluster_environ"
 	// SiteStateUpdatingConfig is the state of the cluster when it's updating configuration
 	SiteStateUpdatingConfig = "updating_cluster_config"
+	//
+	SiteStateReconfiguring = "reconfiguring"
 	// SiteStateDegraded means that the application installed on a deployed site is failing its health check
 	SiteStateDegraded = "degraded"
 	// SiteStateOffline means that OpsCenter cannot connect to remote site
@@ -204,6 +206,7 @@ var (
 		OperationGarbageCollect:       SiteStateGarbageCollecting,
 		OperationUpdateRuntimeEnviron: SiteStateUpdatingEnviron,
 		OperationUpdateConfig:         SiteStateUpdatingConfig,
+		OperationReconfigure:          SiteStateReconfiguring,
 	}
 
 	// OperationSucceededToClusterState defines states the cluster transitions
@@ -217,6 +220,7 @@ var (
 		OperationGarbageCollect:       SiteStateActive,
 		OperationUpdateRuntimeEnviron: SiteStateActive,
 		OperationUpdateConfig:         SiteStateActive,
+		OperationReconfigure:          SiteStateActive,
 	}
 
 	// OperationFailedToClusterState defines states the cluster transitions
@@ -232,5 +236,6 @@ var (
 		OperationGarbageCollect:       SiteStateActive,
 		OperationUpdateRuntimeEnviron: SiteStateUpdatingEnviron,
 		OperationUpdateConfig:         SiteStateUpdatingConfig,
+		OperationReconfigure:          SiteStateFailed,
 	}
 )

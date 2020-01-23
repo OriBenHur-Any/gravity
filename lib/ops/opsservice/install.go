@@ -154,19 +154,13 @@ func (s *site) createInstallExpandOperation(context context.Context, req createI
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}
-		u, err := url.Parse(fmt.Sprintf("agent://%v/%v", s.service.cfg.Agents.ServerAddr(), role))
+		agentURL, err := s.makeAgentURL(token, role)
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}
-		q := u.Query()
-		q.Set(httplib.AccessTokenQueryParam, token)
-		if s.cloudProviderName() == schema.ProviderAWS {
-			q.Set(ops.AgentProvisioner, schema.ProvisionerAWSTerraform)
-		}
-		u.RawQuery = q.Encode()
 		agents[role] = storage.AgentProfile{
 			Instructions: instructions,
-			AgentURL:     u.String(),
+			AgentURL:     agentURL,
 			Token:        token,
 		}
 	}
@@ -196,6 +190,21 @@ func (s *site) createInstallExpandOperation(context context.Context, req createI
 	})
 
 	return key, nil
+}
+
+// makeAgentURL generates the URL for an RPC agent with the specified role.
+func (s *site) makeAgentURL(token, role string) (string, error) {
+	u, err := url.Parse(fmt.Sprintf("agent://%v/%v", s.service.cfg.Agents.ServerAddr(), role))
+	if err != nil {
+		return "", trace.Wrap(err)
+	}
+	q := u.Query()
+	q.Set(httplib.AccessTokenQueryParam, token)
+	if s.cloudProviderName() == schema.ProviderAWS {
+		q.Set(ops.AgentProvisioner, schema.ProvisionerAWSTerraform)
+	}
+	u.RawQuery = q.Encode()
+	return u.String(), nil
 }
 
 func (s *site) selectSubnets(operation ops.SiteOperation) (*storage.Subnets, error) {
@@ -883,16 +892,20 @@ func (s *site) newProvisioningToken(operation ops.SiteOperation) (token string, 
 			return "", trace.Wrap(err)
 		}
 	}
+	tokenType := storage.ProvisioningTokenTypeExpand
+	if operation.Type == ops.OperationReconfigure {
+		tokenType = storage.ProvisioningTokenTypeReconfigure
+	}
 	tokenRequest := storage.ProvisioningToken{
-		Token:      token,
-		AccountID:  s.key.AccountID,
-		SiteDomain: s.key.SiteDomain,
-		// Always create an expand token
-		Type:        storage.ProvisioningTokenTypeExpand,
+		Token:       token,
+		AccountID:   s.key.AccountID,
+		SiteDomain:  s.key.SiteDomain,
+		Type:        storage.ProvisioningTokenType(tokenType),
 		OperationID: operation.ID,
 		UserEmail:   agentUser.GetName(),
 	}
-	if operation.Type == ops.OperationExpand {
+	switch operation.Type {
+	case ops.OperationExpand, ops.OperationReconfigure:
 		// Set a TTL for expand provisioning token.
 		tokenRequest.Expires = s.clock().UtcNow().Add(defaults.InstallTokenTTL)
 	}

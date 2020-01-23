@@ -139,6 +139,21 @@ var (
 		Name: OperationFailedEvent,
 		Code: OperationConfigFailureCode,
 	}
+	//
+	OperationReconfigureStart = events.Event{
+		Name: OperationStartedEvent,
+		Code: OperationReconfigureStartCode,
+	}
+	//
+	OperationReconfigureComplete = events.Event{
+		Name: OperationCompletedEvent,
+		Code: OperationReconfigureCompleteCode,
+	}
+	//
+	OperationReconfigureFailure = events.Event{
+		Name: OperationFailedEvent,
+		Code: OperationReconfigureFailureCode,
+	}
 	// UserCreated is emitted when a user is created/updated.
 	UserCreated = events.Event{
 		Name: UserCreatedEvent,
@@ -335,6 +350,12 @@ const (
 	OperationConfigCompleteCode = "G0016I"
 	// OperationConfigFailureCode is the cluster configuration update operation failure event code.
 	OperationConfigFailureCode = "G0016E"
+	//
+	OperationReconfigureStartCode = "G0017I"
+	//
+	OperationReconfigureCompleteCode = "G0018I"
+	//
+	OperationReconfigureFailureCode = "G0018E"
 	// UserCreatedCode is the user created event code.
 	UserCreatedCode = "G1000I"
 	// UserDeletedCode is the user deleted event code.

@@ -1198,6 +1198,8 @@ type ProvisioningToken struct {
 	Token string `json:"token"`
 	// Expires sets the token expiry time, zero time if never expires
 	Expires time.Time `json:"expires"`
+	//
+	Created time.Time `json:"created"`
 	// Type is token type - 'install' or 'expand'
 	Type ProvisioningTokenType `json:"type"`
 	// AccountID is the account this signup token
@@ -1236,12 +1238,14 @@ const (
 	ProvisioningTokenTypeInstall = "install"
 	// ProvisioningTokenTypeExpand is used to validate joining nodes
 	ProvisioningTokenTypeExpand = "expand"
+	//
+	ProvisioningTokenTypeReconfigure = "reconfigure"
 )
 
 // Check returns nil if the value is correct, error otherwise
 func (s *ProvisioningTokenType) Check() error {
 	switch *s {
-	case ProvisioningTokenTypeInstall, ProvisioningTokenTypeExpand:
+	case ProvisioningTokenTypeInstall, ProvisioningTokenTypeExpand, ProvisioningTokenTypeReconfigure:
 		return nil
 	}
 	return trace.BadParameter("unsupported token type: %v", *s)
@@ -1281,6 +1285,8 @@ type InstallToken struct {
 	Token string `json:"token"`
 	// Expires sets the token expiry time, zero time if never expires
 	Expires time.Time `json:"expires"`
+	//
+	Created time.Time `json:"created"`
 	// AccountID is the account this signup token
 	// is associated with in case if that's user signup token
 	AccountID string `json:"account_id"`

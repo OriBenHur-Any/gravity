@@ -27,6 +27,9 @@ func (b *backend) CreateProvisioningToken(t storage.ProvisioningToken) (*storage
 	if err := t.Check(); err != nil {
 		return nil, trace.Wrap(err)
 	}
+	if t.Created.IsZero() {
+		t.Created = b.Clock.Now()
+	}
 	err := b.createVal(b.key(provisioningTokensP, t.Token), t, b.ttl(t.Expires))
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -109,6 +112,9 @@ func (b *backend) GetSiteProvisioningTokens(siteDomain string) ([]storage.Provis
 func (b *backend) CreateInstallToken(t storage.InstallToken) (*storage.InstallToken, error) {
 	if err := t.Check(); err != nil {
 		return nil, trace.Wrap(err)
+	}
+	if t.Created.IsZero() {
+		t.Created = b.Clock.Now()
 	}
 	err := b.createVal(b.key(installTokensP, t.Token), t, b.ttl(t.Expires))
 	if err != nil {
