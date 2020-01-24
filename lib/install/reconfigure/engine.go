@@ -67,6 +67,7 @@ type Config struct {
 	logrus.FieldLogger
 	// Operator specifies the service operator
 	ops.Operator
+	InstallOperation *ops.SiteOperation
 	// //
 	// AdvertiseAddr string
 	// //
@@ -173,7 +174,7 @@ func (r *executor) createOperation() (*ops.SiteOperation, error) {
 		AdvertiseIP: r.config.AdvertiseAddr,
 		Hostname:    systemInfo.GetHostname(),
 		// Nodename: ,
-		// Role: ,
+		Role: r.config.Role,
 		// InstanceType: ,
 		// InstanceID: ,
 		ClusterRole: string(schema.ServiceRoleMaster),
@@ -193,6 +194,7 @@ func (r *executor) createOperation() (*ops.SiteOperation, error) {
 		AdvertiseAddr: r.config.AdvertiseAddr,
 		Token:         r.config.Token.Token,
 		Servers:       []storage.Server{server},
+		InstallExpand: r.InstallOperation.InstallExpand,
 	}
 	r.Infof("DEBUG %#v", req)
 	key, err := r.Operator.CreateClusterReconfigureOperation(r.ctx, req)

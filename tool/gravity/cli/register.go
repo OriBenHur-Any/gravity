@@ -143,6 +143,7 @@ func RegisterCommands(app *kingpin.Application) *Application {
 	g.ReconfigureCmd.CmdClause = g.Command("reconfigure", "")
 	g.ReconfigureCmd.Path = g.ReconfigureCmd.Arg("path", "Path to the directory with the unpacked cluster image. Defaults to the current directory.").String()
 	g.ReconfigureCmd.AdvertiseAddr = g.ReconfigureCmd.Flag("advertise-addr", "").String()
+	g.ReconfigureCmd.Role = g.ReconfigureCmd.Flag("role", "").String()
 	g.ReconfigureCmd.FromService = g.ReconfigureCmd.Flag("from-service", "").Hidden().Bool()
 
 	g.PlanCmd.CmdClause = g.Command("plan", "Manage operation plan.")

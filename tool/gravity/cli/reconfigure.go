@@ -3,12 +3,20 @@ package cli
 
 import (
 	"context"
+	"io"
+	"io/ioutil"
+	"os"
 
+	"github.com/gravitational/gravity/lib/constants"
 	"github.com/gravitational/gravity/lib/defaults"
 	"github.com/gravitational/gravity/lib/install"
 	installerclient "github.com/gravitational/gravity/lib/install/client"
 	"github.com/gravitational/gravity/lib/install/reconfigure"
+	"github.com/gravitational/gravity/lib/loc"
 	"github.com/gravitational/gravity/lib/localenv"
+	"github.com/gravitational/gravity/lib/ops"
+	"github.com/gravitational/gravity/lib/storage"
+	"github.com/gravitational/gravity/lib/storage/keyval"
 	"github.com/gravitational/gravity/lib/system/signals"
 	"github.com/gravitational/gravity/lib/utils"
 	"github.com/gravitational/gravity/lib/utils/cli"
@@ -95,8 +103,13 @@ func startReconfiguratorFromService(env *localenv.LocalEnvironment, config Insta
 }
 
 func newReconfigurator(ctx context.Context, config *install.Config) (*install.Installer, error) {
+	installOperation, err := getInstallOperation(config)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
 	engine, err := reconfigure.NewEngine(reconfigure.Config{
-		Operator: config.Operator,
+		Operator:         config.Operator,
+		InstallOperation: installOperation,
 		// AdvertiseAddr: config.AdvertiseAddr,
 		// Token:         config.Token.Token,
 	})
@@ -115,4 +128,47 @@ func newReconfigurator(ctx context.Context, config *install.Config) (*install.In
 		return nil, trace.Wrap(err)
 	}
 	return installer, nil
+}
+
+func getInstallOperation(config *install.Config) (*storage.Site, *ops.SiteOperation, error) {
+	_, reader, err := config.LocalPackages.ReadPackage(loc.Locator{
+		Repository: config.SiteDomain,
+		Name:       constants.SiteExportPackage,
+		Version:    "0.0.1",
+	})
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	defer reader.Close()
+	tempFile, err := ioutil.TempFile("", "")
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	defer os.Remove(tempFile.Name())
+	_, err = io.Copy(tempFile, reader)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	backend, err := keyval.NewBolt(keyval.BoltConfig{
+		Path: tempFile.Name(),
+	})
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	defer backend.Close()
+	cluster, err := backend.GetSite(config.SiteDomain)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	operations, err := storage.GetOperations(backend)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	for _, operation := range operations {
+		if operation.Type == ops.OperationInstall {
+			opsOperation := (ops.SiteOperation)(operation)
+			return &opsOperation, nil
+		}
+	}
+	return nil, trace.NotFound("install operation not found")
 }

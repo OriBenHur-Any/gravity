@@ -494,6 +494,8 @@ type ReconfigureCmd struct {
 	//
 	AdvertiseAddr *string
 	//
+	Role *string
+	//
 	FromService *bool
 }
 

@@ -24,26 +24,22 @@ func (o *Operator) CreateClusterReconfigureOperation(ctx context.Context, req op
 	}
 
 	operation := ops.SiteOperation{
-		ID:         uuid.New(),
-		AccountID:  req.AccountID,
-		SiteDomain: req.SiteDomain,
-		Type:       ops.OperationReconfigure,
-		Created:    cluster.clock().UtcNow(),
-		CreatedBy:  storage.UserFromContext(ctx),
-		Updated:    cluster.clock().UtcNow(),
-		State:      ops.OperationReconfigureInProgress,
-		Servers:    req.Servers,
-		// // Reuse the same operation state install/expand use b/c that's where
-		// // the installer will be looking for the agent connection information.
-		// InstallExpand: &storage.InstallExpandOperationState{
-		// 	Agents: make(map[string]storage.AgentProfile),
-		// },
+		ID:            uuid.New(),
+		AccountID:     req.AccountID,
+		SiteDomain:    req.SiteDomain,
+		Type:          ops.OperationReconfigure,
+		Created:       cluster.clock().UtcNow(),
+		CreatedBy:     storage.UserFromContext(ctx),
+		Updated:       cluster.clock().UtcNow(),
+		State:         ops.OperationReconfigureInProgress,
+		Servers:       req.Servers,
+		InstallExpand: req.InstallExpand,
 	}
 
-	// token, err := cluster.newProvisioningToken(operation)
-	// if err != nil {
-	// 	return nil, trace.Wrap(err)
-	// }
+	_, err = cluster.newProvisioningToken(operation)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
 
 	// for _, profile := range cluster.app.Manifest.NodeProfiles {
 	// 	agentURL, err := cluster.makeAgentURL(token, profile.Name)

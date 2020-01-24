@@ -1384,9 +1384,10 @@ type CreateClusterGarbageCollectOperationRequest struct {
 //
 type CreateClusterReconfigureOperationRequest struct {
 	SiteKey
-	AdvertiseAddr string           `json:"advertise_addr"`
-	Token         string           `json:"token"`
-	Servers       []storage.Server `json:"servers"`
+	AdvertiseAddr string                               `json:"advertise_addr"`
+	Token         string                               `json:"token"`
+	Servers       []storage.Server                     `json:"servers"`
+	InstallExpand *storage.InstallExpandOperationState `json:"install_expand"`
 }
 
 // CreateUpdateEnvarsOperationRequest is a request

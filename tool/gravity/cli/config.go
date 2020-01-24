@@ -175,6 +175,7 @@ func NewReconfigureConfig(env *localenv.LocalEnvironment, g *Application) (*Inst
 		UserLogFile:        *g.UserLogFile,
 		SystemLogFile:      *g.SystemLogFile,
 		AdvertiseAddr:      *g.ReconfigureCmd.AdvertiseAddr,
+		Role:               *g.ReconfigureCmd.Role,
 		FromService:        *g.ReconfigureCmd.FromService,
 		LocalPackages:      env.Packages,
 		LocalApps:          env.Apps,

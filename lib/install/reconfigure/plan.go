@@ -1,6 +1,8 @@
 package reconfigure
 
 import (
+	"github.com/gravitational/gravity/lib/app"
+	"github.com/gravitational/gravity/lib/fsm"
 	"github.com/gravitational/gravity/lib/install"
 	"github.com/gravitational/gravity/lib/ops"
 	"github.com/gravitational/gravity/lib/storage"
@@ -15,14 +17,25 @@ func NewPlanner(getter install.PlanBuilderGetter) *Planner {
 }
 
 func (p *Planner) GetOperationPlan(operator ops.Operator, cluster ops.Site, operation ops.SiteOperation) (*storage.OperationPlan, error) {
-	// The "reconfigure" operation reuses a lot of the install fsm phases.
-	installBuilder, err := p.GetPlanBuilder(operator, cluster, operation)
-	if err != nil {
-		return nil, trace.Wrap(err)
+	masters, _ := fsm.SplitServers(operation.Servers)
+	if len(masters) == 0 {
+		return nil, trace.BadParameter(
+			"at least one master server is required: %v", operation.Servers)
 	}
 
+	// The "reconfigure" operation reuses a lot of the install fsm phases.
 	builder := &PlanBuilder{
-		PlanBuilder: installBuilder,
+		PlanBuilder: &install.PlanBuilder{
+			Cluster:   ops.ConvertOpsSite(cluster),
+			Operation: operation,
+			Application: app.Application{
+				Package:         cluster.App.Package,
+				PackageEnvelope: cluster.App.PackageEnvelope,
+				Manifest:        cluster.App.Manifest,
+			},
+			Masters: masters,
+			Master:  masters[0],
+		},
 	}
 
 	plan := &storage.OperationPlan{
