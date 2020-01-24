@@ -2,6 +2,7 @@ package reconfigure
 
 import (
 	"github.com/gravitational/gravity/lib/app"
+	"github.com/gravitational/gravity/lib/constants"
 	"github.com/gravitational/gravity/lib/fsm"
 	"github.com/gravitational/gravity/lib/install"
 	"github.com/gravitational/gravity/lib/ops"
@@ -10,9 +11,10 @@ import (
 	"github.com/gravitational/trace"
 )
 
-func NewPlanner(getter install.PlanBuilderGetter) *Planner {
+func NewPlanner(getter install.PlanBuilderGetter, cluster storage.Site) *Planner {
 	return &Planner{
 		PlanBuilderGetter: getter,
+		Cluster:           cluster,
 	}
 }
 
@@ -21,6 +23,12 @@ func (p *Planner) GetOperationPlan(operator ops.Operator, cluster ops.Site, oper
 	if len(masters) == 0 {
 		return nil, trace.BadParameter(
 			"at least one master server is required: %v", operation.Servers)
+	}
+
+	teleportPackage, err := cluster.App.Manifest.Dependencies.ByName(
+		constants.TeleportPackage)
+	if err != nil {
+		return nil, trace.Wrap(err)
 	}
 
 	// The "reconfigure" operation reuses a lot of the install fsm phases.
@@ -33,8 +41,10 @@ func (p *Planner) GetOperationPlan(operator ops.Operator, cluster ops.Site, oper
 				PackageEnvelope: cluster.App.PackageEnvelope,
 				Manifest:        cluster.App.Manifest,
 			},
-			Masters: masters,
-			Master:  masters[0],
+			Masters:         masters,
+			Master:          masters[0],
+			ServiceUser:     p.Cluster.ServiceUser,
+			TeleportPackage: *teleportPackage,
 		},
 	}
 
@@ -60,4 +70,5 @@ func (p *Planner) GetOperationPlan(operator ops.Operator, cluster ops.Site, oper
 
 type Planner struct {
 	install.PlanBuilderGetter
+	Cluster storage.Site
 }

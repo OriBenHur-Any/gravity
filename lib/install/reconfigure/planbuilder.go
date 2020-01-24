@@ -14,7 +14,7 @@ type PlanBuilder struct {
 // TODO
 func (b *PlanBuilder) AddFixPhase(plan *storage.OperationPlan) {
 	plan.Phases = append(plan.Phases, storage.OperationPhase{
-		ID:          "/fix",
+		ID:          ReconfigurePhase,
 		Description: "Fix everything",
 		Requires:    fsm.RequireIfPresent(plan, phases.HealthPhase),
 		Data: &storage.OperationPhaseData{

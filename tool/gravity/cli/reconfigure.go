@@ -103,7 +103,7 @@ func startReconfiguratorFromService(env *localenv.LocalEnvironment, config Insta
 }
 
 func newReconfigurator(ctx context.Context, config *install.Config) (*install.Installer, error) {
-	installOperation, err := getInstallOperation(config)
+	cluster, installOperation, err := getInstallOperation(config)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -119,7 +119,7 @@ func newReconfigurator(ctx context.Context, config *install.Config) (*install.In
 	config.LocalAgent = false
 	installer, err := install.New(ctx, install.RuntimeConfig{
 		Config:         *config,
-		Planner:        reconfigure.NewPlanner(config),
+		Planner:        reconfigure.NewPlanner(config, *cluster),
 		FSMFactory:     install.NewFSMFactory(*config),
 		ClusterFactory: install.NewClusterFactory(*config),
 		Engine:         engine,
@@ -130,45 +130,44 @@ func newReconfigurator(ctx context.Context, config *install.Config) (*install.In
 	return installer, nil
 }
 
-func getInstallOperation(config *install.Config) (*storage.Site, *ops.SiteOperation, error) {
+func getInstallOperation(config *install.Config) (*storage.Site, *storage.SiteOperation, error) {
 	_, reader, err := config.LocalPackages.ReadPackage(loc.Locator{
 		Repository: config.SiteDomain,
 		Name:       constants.SiteExportPackage,
 		Version:    "0.0.1",
 	})
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return nil, nil, trace.Wrap(err)
 	}
 	defer reader.Close()
 	tempFile, err := ioutil.TempFile("", "")
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return nil, nil, trace.Wrap(err)
 	}
 	defer os.Remove(tempFile.Name())
 	_, err = io.Copy(tempFile, reader)
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return nil, nil, trace.Wrap(err)
 	}
 	backend, err := keyval.NewBolt(keyval.BoltConfig{
 		Path: tempFile.Name(),
 	})
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return nil, nil, trace.Wrap(err)
 	}
 	defer backend.Close()
 	cluster, err := backend.GetSite(config.SiteDomain)
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return nil, nil, trace.Wrap(err)
 	}
 	operations, err := storage.GetOperations(backend)
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return nil, nil, trace.Wrap(err)
 	}
 	for _, operation := range operations {
 		if operation.Type == ops.OperationInstall {
-			opsOperation := (ops.SiteOperation)(operation)
-			return &opsOperation, nil
+			return cluster, &operation, nil
 		}
 	}
-	return nil, trace.NotFound("install operation not found")
+	return nil, nil, trace.NotFound("install operation not found")
 }

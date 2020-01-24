@@ -67,7 +67,7 @@ type Config struct {
 	logrus.FieldLogger
 	// Operator specifies the service operator
 	ops.Operator
-	InstallOperation *ops.SiteOperation
+	InstallOperation *storage.SiteOperation
 	// //
 	// AdvertiseAddr string
 	// //
