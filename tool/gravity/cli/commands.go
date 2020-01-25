@@ -248,6 +248,8 @@ type Application struct {
 	SystemRotateCertsCmd SystemRotateCertsCmd
 	// SystemExportCACmd exports cluster CA
 	SystemExportCACmd SystemExportCACmd
+	// SystemStopCmd stops all gravity services on the node
+	SystemStopCmd SystemStopCmd
 	// SystemUninstallCmd uninstalls all gravity services from local node
 	SystemUninstallCmd SystemUninstallCmd
 	// SystemPullUpdatesCmd pulls updates for system packages
@@ -1419,6 +1421,13 @@ type SystemExportCACmd struct {
 	ClusterName *string
 	// CAPath is path to export CA to
 	CAPath *string
+}
+
+// SystemStopCmd stops all Gravity services on the node.
+type SystemStopCmd struct {
+	*kingpin.CmdClause
+	// Confirmed suppresses confirmation prompt
+	Confirmed *bool
 }
 
 // SystemUninstallCmd uninstalls all gravity services from local node

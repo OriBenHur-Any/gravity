@@ -120,7 +120,7 @@ func newReconfigurator(ctx context.Context, config *install.Config) (*install.In
 	installer, err := install.New(ctx, install.RuntimeConfig{
 		Config:         *config,
 		Planner:        reconfigure.NewPlanner(config, *cluster),
-		FSMFactory:     install.NewFSMFactory(*config),
+		FSMFactory:     reconfigure.NewFSMFactory(*config),
 		ClusterFactory: install.NewClusterFactory(*config),
 		Engine:         engine,
 	})

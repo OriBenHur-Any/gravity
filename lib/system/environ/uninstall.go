@@ -81,6 +81,19 @@ func CleanupOperationState(printer utils.Printer, logger log.FieldLogger) error 
 	return trace.Wrap(removePaths(printer, logger, stateDir))
 }
 
+// StopServices stops gravity systemd services on the node.
+func StopServices(printer utils.Printer, logger log.FieldLogger) error {
+	svm, err := systemservice.New()
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	err = stopPackageServices(svm, printer, logger)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	return nil
+}
+
 // UninstallServices stops and uninstalls all relevant services
 func UninstallServices(printer utils.Printer, logger log.FieldLogger) error {
 	svm, err := systemservice.New()
@@ -125,6 +138,24 @@ func DisableAgentServices(logger log.FieldLogger) error {
 		}
 		if err := svm.DisableService(req); err != nil && !systemservice.IsUnknownServiceError(err) {
 			logger.WithError(err).Warn("Failed to disable agent service.")
+			errors = append(errors, err)
+		}
+	}
+	return trace.NewAggregate(errors...)
+}
+
+func stopPackageServices(svm systemservice.ServiceManager, printer utils.Printer, logger log.FieldLogger) error {
+	services, err := svm.ListPackageServices()
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	var errors []error
+	for _, service := range services {
+		printer.PrintStep("Stopping system service %v", service)
+		log := logger.WithField("package", service.Package)
+		err := svm.StopPackageService(service.Package)
+		if err != nil {
+			log.WithError(err).Warn("Failed to stop service.")
 			errors = append(errors, err)
 		}
 	}

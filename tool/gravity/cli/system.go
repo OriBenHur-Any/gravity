@@ -558,6 +558,29 @@ func systemServiceStatus(env *localenv.LocalEnvironment, pkg loc.Locator, servic
 	return nil
 }
 
+func systemStop(env *localenv.LocalEnvironment, confirmed bool) error {
+	if !confirmed {
+		env.Println("This action will stop all Gravity and Kubernetes services on the node. Proceed?")
+		confirmed, err := confirm()
+		if err != nil {
+			return trace.Wrap(err)
+		}
+		if !confirmed {
+			env.Println("Action cancelled by user.")
+			return nil
+		}
+	}
+
+	logger := log.WithField(trace.Component, "system:stop")
+	err := environ.StopServices(env, logger)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	env.PrintStep("Gravity services have been stopped")
+	return nil
+}
+
 // systemUninstall uninstalls all gravity components
 func systemUninstall(env *localenv.LocalEnvironment, confirmed bool) error {
 	if !confirmed {

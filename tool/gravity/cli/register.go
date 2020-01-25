@@ -600,6 +600,10 @@ func RegisterCommands(app *kingpin.Application) *Application {
 	g.SystemExportCACmd.ClusterName = g.SystemExportCACmd.Arg("cluster-name", "Name of the local cluster").Required().String()
 	g.SystemExportCACmd.CAPath = g.SystemExportCACmd.Arg("path", "File path to export CA at").Required().String()
 
+	// TODO(r0mant): Add flags --planet and --teleport to this command.
+	g.SystemStopCmd.CmdClause = g.SystemCmd.Command("stop", "Stop Gravity services on the node.")
+	g.SystemStopCmd.Confirmed = g.SystemStopCmd.Flag("confirm", "Suppress confirmation prompt.").Bool()
+
 	g.SystemUninstallCmd.CmdClause = g.SystemCmd.Command("uninstall", "uninstall gravity from the host").Hidden()
 	g.SystemUninstallCmd.Confirmed = g.SystemUninstallCmd.Flag("confirm", "confirm uninstall").Bool()
 

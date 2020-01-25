@@ -162,6 +162,7 @@ func InitAndCheck(g *Application, cmd string) error {
 	case g.SystemUpdateCmd.FullCommand(),
 		g.UpgradeCmd.FullCommand(),
 		g.SystemRollbackCmd.FullCommand(),
+		g.SystemStopCmd.FullCommand(),
 		g.SystemUninstallCmd.FullCommand(),
 		g.UpdateSystemCmd.FullCommand(),
 		g.RPCAgentShutdownCmd.FullCommand(),
@@ -790,6 +791,8 @@ func Execute(g *Application, cmd string, extraArgs []string) (err error) {
 		return systemServiceStatus(localEnv,
 			*g.SystemServiceStatusCmd.Package,
 			*g.SystemServiceStatusCmd.Name)
+	case g.SystemStopCmd.FullCommand():
+		return systemStop(localEnv, *g.SystemStopCmd.Confirmed)
 	case g.SystemUninstallCmd.FullCommand():
 		return systemUninstall(localEnv, *g.SystemUninstallCmd.Confirmed)
 	case g.SystemReportCmd.FullCommand():
